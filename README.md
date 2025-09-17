@@ -1,3 +1,8 @@
+# 🚀 How to run development
+```bash
+yarn install && yarn dev
+```
+
 # 🚀 API Usage with cURL
 
 This project provides multiple endpoints to generate responses from different input types (text, image, document, audio). Below are example `cURL` commands you can use to test the APIs.
