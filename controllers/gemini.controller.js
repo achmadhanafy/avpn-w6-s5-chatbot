@@ -2,8 +2,9 @@ import { createPartFromUri, createUserContent, GoogleGenAI } from '@google/genai
 import Config from 'dotenv/config'
 import multer from 'multer'
 import fs from 'fs'
+import { randomUUID } from 'crypto'
 
-
+const generalError = 'Sorry an error occured, please contact customer support'
 const upload = multer();
 const ai = new GoogleGenAI({ apiKey: Config.GEMINI_API_KEY });
 
@@ -193,9 +194,140 @@ const audioPromptController = async (req, res) => {
     }
 }
 
+async function getSessionTitleIfNeeded(conversation) {
+    conversation = [...conversation, {
+        role: "user",
+        parts: [{text: "Create a short descriptive title for this conversation in language based language in coversation"}]
+    }]
+    try {
+        const res = await ai.models.generateContent({
+            model: geminiModels.text,
+            contents: conversation,
+            config: {
+                systemInstruction: "Short description must be (≤6 words)"
+            }
+        });
+        return res.text
+    } catch (error) {
+        throw (error)
+    }
+}
+
+
+const chatController = async (req, res) => {
+    try {
+        const { conversation, isNewSession } = req.body;
+
+        // Negative cases
+        if (!conversation || !Array.isArray(conversation)) { // Check conversation value is correct
+            return res.status(400).json({
+                success: false,
+                data: null,
+                message: generalError,
+                detail: 'conversation at body should be array'
+            });
+        }
+
+        let dataInValidMessage = ""
+        conversation.forEach(item => { // Check items in conversation is correct
+            if (!item) {
+                dataInValidMessage = "conversation at body can't be empty"
+            } else if (!item.role || !item.message) {
+                dataInValidMessage = "coversation at body should be array of object with role and message property"
+            }
+        });
+        if (dataInValidMessage?.length) { // Throw error if any error
+            return res.status(400).json({
+                success: false,
+                data: null,
+                message: generalError,
+                detail: dataInValidMessage
+            });
+        }
+
+        // Mapping
+        let contents = conversation.map(item => {
+            return {
+                role: item.role,
+                parts: [
+                    { text: item.message }
+                ]
+            }
+        });
+
+        const aiResponse = await ai.models.generateContent({
+            model: geminiModels.text,
+            contents,
+            config: {
+                systemInstruction: `
+                You are Sagara AI, a helpful and knowledgeable assistant.
+                Always respond in a professional, clear, and concise manner.
+                Refer to yourself as "Sagara AI" when needed, develop by Achmad Hanafy.
+                Stay friendly, solution-oriented, and explain step by step when useful.
+    `
+            }
+        });
+
+        let sessionTitle
+        if (isNewSession && aiResponse?.text) {
+            sessionTitle = await getSessionTitleIfNeeded([...contents, {
+                role: "model",
+                parts: [
+                    { text: aiResponse.text }
+                ]
+            }])
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: aiResponse.text,
+            sessionTitle: sessionTitle,
+            message: "success"
+        });
+
+    } catch (error) {
+        // This `catch` block will be triggered by express-async-errors
+        if (error?.status) {
+            if (error.status === 429) {
+                // Handle rate limit errors
+                return res.status(429).json({ success: false, data: null, message: 'You have exceeded the rate limit. Please try again later.', detail: error?.message });
+            }
+            if (error.status === 400) {
+                // Handle malformed requests or safety issues
+                const firstCandidate = error?.response?.candidates?.[0];
+                const safetyReason = firstCandidate?.finishReason;
+                const safetyRatings = firstCandidate?.safetyRatings;
+
+                if (safetyReason === 'SAFETY') {
+                    return res.status(400).json({
+                        success: false,
+                        data: null,
+                        message: 'The content was blocked due to safety concerns.',
+                        detail: safetyRatings
+                    });
+                }
+                return res.status(400).json({
+                    success: false,
+                    data: null,
+                    message: generalError,
+                    detail: error?.message
+                });
+            }
+
+            // Handle other API errors
+            return res.status(error.status || 500).json({ success: false, data: null, message: generalError, detail: error.message });
+        }
+
+        // Handle all other unexpected errors
+        console.error('An unexpected error occurred:', error);
+        res.status(500).json({ success: false, data: null, message: generalError, details: error.message });
+    }
+}
+
 export {
     textPromptController,
     imagePromptController,
     documentPromptController,
-    audioPromptController
+    audioPromptController,
+    chatController
 }
