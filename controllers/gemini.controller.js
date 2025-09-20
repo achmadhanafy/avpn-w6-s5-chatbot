@@ -268,6 +268,10 @@ const chatController = async (req, res) => {
             }
         });
 
+        if(contents?.length > 10){ // Get max last 10 history
+           contents.slice(-10);
+        }
+
         let sessionTitle
         if (isNewSession && aiResponse?.text) {
             sessionTitle = await getSessionTitleIfNeeded([...contents, {
