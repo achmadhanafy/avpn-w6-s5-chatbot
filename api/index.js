@@ -20,11 +20,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 // Serve React build
-app.use(express.static(path.join(__dirname, "./client/build")));
+if (!process.env.VERCEl) {
+  app.use(express.static(path.join(__dirname, "../client/build")));
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "./client/build", "index.html"));
-});
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, "../client/build", "index.html"));
+  });
+}
 
 app.post('/api/generate-text', textPromptController);
 app.post('/api/chat', chatController);
