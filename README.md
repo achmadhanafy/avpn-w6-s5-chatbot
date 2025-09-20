@@ -1,3 +1,5 @@
+Project Deployment URL: https://sagara-chatbot.vercel.app/ 
+
 # 🚀 How to run development
 
 Create .env file in root of project
