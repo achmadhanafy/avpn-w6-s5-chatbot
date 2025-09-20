@@ -4,6 +4,7 @@ import cors from 'cors';
 import multer from 'multer';
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
+import serverless from "serverless-http";
 import { audioPromptController, chatController, documentPromptController, imagePromptController, textPromptController } from './controllers/gemini.controller.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,3 +37,6 @@ app.post('/api/generate-from-audio', upload.single('audio'), audioPromptControll
 
 const port = process.env.PORT || 4000;
 app.listen(port);
+
+export default app;
+export const handler = serverless(app);
