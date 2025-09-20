@@ -397,12 +397,12 @@ function App() {
             onSubmit={handleSendMessage}
             className="flex items-center gap-3"
           >
-            <input
-              type="text"
+            <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ask something..."
-              className="w-full text-sm bg-gray-700 text-white rounded-full py-3 px-5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-sm bg-gray-700 text-white rounded-2xl py-6 px-5 resize-none max-h-32 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-purple-500"
+              rows={1} // optional, starts with 1 row
             />
             <button
               type="submit"

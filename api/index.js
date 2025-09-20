@@ -12,7 +12,7 @@ const __dirname = dirname(__filename);
 
 dotenv.config();
 const upload = multer({
-  dest: 'uploads/'
+  storage: multer.memoryStorage()
 });
 
 const app = express();
