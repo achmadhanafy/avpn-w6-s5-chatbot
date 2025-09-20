@@ -400,6 +400,12 @@ function App() {
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault(); // prevent newline
+                  handleSendMessage(e); // trigger send
+                }
+              }}
               placeholder="Ask something..."
               className="w-full text-sm bg-gray-700 text-white rounded-2xl py-6 px-5 resize-none max-h-32 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-purple-500"
               rows={1} // optional, starts with 1 row

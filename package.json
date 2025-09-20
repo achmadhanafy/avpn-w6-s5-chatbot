@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node api/index.js",
-    "dev": "nodemon api/index.js"
+    "start": "npm run build --prefix client && node api/index.js",
+    "dev": "npm run build --prefix client && nodemon api/index.js"
   },
   "keywords": [],
   "author": "",
